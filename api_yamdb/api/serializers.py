@@ -1,6 +1,31 @@
 from rest_framework import serializers
 
-from reviews.models import Category, Genre, Title
+from reviews.models import Category, Genre, Title, User
+
+
+class SignupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['email', 'username']
+
+    def validate(self, attrs):
+        username = attrs.get('username')
+
+        if username == 'me':
+            raise serializers.ValidationError('Запрещенное имя для пользователя')
+        return attrs
+
+    def create(self, validated_data):
+        return User.objects.create_user(**validated_data)
+
+
+class ConfirmationSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(max_length=30)
+    confirmation_code = serializers.CharField()
+
+    class Meta:
+        model = User
+        fields = ('username', 'confirmation_code')
 
 
 class CategorySerializer(serializers.ModelSerializer):

@@ -1,16 +1,20 @@
+import uuid
+
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from rest_framework.exceptions import ValidationError
+from rest_framework_simplejwt.tokens import RefreshToken
+
 from .manager import UserManager
 from datetime import date
 
 
 class User(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICES = (
-        ('user', 'User'),
-        ('moderator', 'Moderator'),
-        ('admin', 'Admin')
+        (1, 'user'),
+        (2, 'moderator'),
+        (3, 'admin')
     )
 
     username = models.CharField(max_length=30, unique=True)
@@ -18,15 +22,23 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=30, blank=True)
     last_name = models.CharField(max_length=50, blank=True)
     bio = models.CharField(max_length=100, blank=True)
-    role = models.PositiveSmallIntegerField(choices=ROLE_CHOICES, blank=True, null=True, default=3)
+    role = models.PositiveSmallIntegerField(choices=ROLE_CHOICES, blank=True, null=True, default=1)
     is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    confirmation_code = models.CharField(max_length=256, default=uuid.uuid4)
 
     USERNAME_FIELD = 'email'
+
+    REQUIRED_FIELDS = ('username',)
 
     objects = UserManager()
 
     def __str__(self):
         return self.email
+
+    @property
+    def token(self):
+        return RefreshToken.for_user(self)
 
     class Meta:
         verbose_name = 'user'
