@@ -8,11 +8,12 @@ from rest_framework import filters, mixins, viewsets, generics, status, permissi
 from rest_framework.viewsets import GenericViewSet
 
 from .filters import TitleFilter
-from .permissions import IsAdminUserOrReadOnly
+from .permissions import IsAdminUserOrReadOnly, AdminOrAuthOnly
 from reviews.models import Category, Genre, Title, User
 from .serializers import (CategorySerializer,
                           GenreSerializer,
                           TitleReadSerializer, TitleWriteSerializer, SignupSerializer, ConfirmationSerializer,
+                          UserSerializer,
                           )
 from django.core.mail import send_mail
 
@@ -47,6 +48,15 @@ class RefreshTokenView(generics.GenericAPIView):
             User, username=user_data['username'], confirmation_code=user_data['confirmation_code']
         )
         return Response({'token': str(user.token)}, status=status.HTTP_200_OK)
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    permission_classes = (AdminOrAuthOnly,)
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    # def perform_create(self, serializer):
+    #     serializer.save(author=self.request.user)
 
 
 class TitleViewSet(viewsets.ModelViewSet):

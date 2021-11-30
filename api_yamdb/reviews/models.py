@@ -4,7 +4,7 @@ from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from rest_framework.exceptions import ValidationError
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken
 
 from .manager import UserManager
 from datetime import date
@@ -38,7 +38,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def token(self):
-        return RefreshToken.for_user(self)
+        return AccessToken.for_user(self)
 
     class Meta:
         verbose_name = 'user'
