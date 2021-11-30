@@ -28,6 +28,8 @@ INSTALLED_APPS = [
     'drf_yasg',
 ]
 
+AUTH_USER_MODEL = 'reviews.User'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
