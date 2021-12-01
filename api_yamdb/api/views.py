@@ -97,3 +97,14 @@ class GenreViewSet(MixinSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['=name']
     lookup_field = 'slug'
+<<<<<<< HEAD
+=======
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    pass
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    pass
+>>>>>>> feature_3

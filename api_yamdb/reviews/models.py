@@ -3,8 +3,13 @@ import uuid
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
+from django.db.models import constraints
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import AccessToken
+<<<<<<< HEAD
+=======
+from enum import Enum
+>>>>>>> feature_3
 
 from .manager import UserManager
 from datetime import date
@@ -99,3 +104,68 @@ class Title(models.Model):
 
     def __str__(self):
         return self.name[0:10]
+
+
+class Review(models.Model):
+
+    SCORE_CHOICES = [
+        (1, 'Perfect'),
+        (9, 'Outstanding'),
+        (8, 'Excellent'),
+        (7, 'Very good'),
+        (6, 'Good'),
+        (5, 'Above average'),
+        (4, 'Average'),
+        (3, 'Below average'),
+        (2, 'Weak'),
+        (1, 'Very weak'),
+    ]
+
+    title = models.ForeignKey(
+        Title,
+        on_delete=models.CASCADE,
+        related_name='reviews',
+        verbose_name='Произведение'
+    )
+    text = models.TextField(
+        'Содержание отзыва',
+        blank=False, 
+        max_length=300
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='reviews',
+        verbose_name='автор'
+    )
+    score = models.IntegerField(choices=SCORE_CHOICES, default=4)
+    pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['title', 'author'],
+                name='unique_author_review'
+            )
+        ]
+
+
+class Comment(models.Model):
+    review = models.ForeignKey(
+        Review,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name='отзыв'
+    )
+    text = models.TextField(
+        'Комментарий',
+        blank=False,
+        max_length=300
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name='автор'
+    )
+    pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)

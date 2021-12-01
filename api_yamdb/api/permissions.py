@@ -12,4 +12,8 @@ class AdminOrAuthOnly(BasePermission):
         return request.user.role == 'admin'
 
     def has_object_permission(self, request, view, obj):
+<<<<<<< HEAD
         return request.user.is_authenticated and obj == request.user
+=======
+        return request.user.is_authenticated and obj == request.user
+>>>>>>> feature_3
