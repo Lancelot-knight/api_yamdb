@@ -1,6 +1,38 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 
-from reviews.models import Category, Genre, Title, Review, Comment
+from reviews.models import Category, Genre, Title, User, Review, Comment
+
+
+class SignupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['email', 'username']
+
+    def validate(self, attrs):
+        username = attrs.get('username')
+
+        if username == 'me':
+            raise serializers.ValidationError('Запрещенное имя для пользователя')
+        return attrs
+
+    def create(self, validated_data):
+        return User.objects.create_user(**validated_data)
+
+
+class ConfirmationSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(max_length=30)
+    confirmation_code = serializers.CharField()
+
+    class Meta:
+        model = User
+        fields = ('username', 'confirmation_code')
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'first_name', 'last_name', 'bio', 'role')
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -40,18 +72,22 @@ class ReviewSerializer(serializers.ModelSerializer):
     title = serializers.SlugRelatedField(
         queryset=Title.objects.all(),
         slug_field='name',
-        read_only=True
     )
+
     class Meta:
         fields = '__all__'
         model = Review
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Review.objects.all(),
+                fields=('title', 'author'),
+                message='Один автор не может оставить 2 отзыва!'
+            )
+        ]
+
 
 class CommentSerializer(serializers.ModelSerializer):
-    review = serializers.SlugRelatedField(
-        queryset=Review.objects.all(),
-        slug_field='text',# тут обрезать до, условно, 10 символов
-        read_only=True
-    )
+
     class Meta:
         fields = '__all__'
         model = Comment
