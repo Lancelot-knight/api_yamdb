@@ -55,16 +55,16 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     lookup_field = 'username'
 
-    @action(methods=['get', 'patch'], detail=False, permission_classes=[IsAuthenticated],
-            url_path='me', url_name='me')
+    @action(methods=['get', 'patch'], detail=False, permission_classes=[IsAuthenticated])
     def me(self, request, *args, **kwargs):
+        self.kwargs['username'] = request.user.username
         user = get_object_or_404(User, pk=request.user.id)
-        print(request.data)
-        # if self.request.method == 'PATCH':
-        #     self.update(request)
-            # User.objects.filter(pk=request.user.id).update(request.data)
-
-        serializer = self.get_serializer(user)
+        if self.request.method == 'PATCH':
+            self.partial_update(request)
+            patched_user = User.objects.get(pk=request.user.id)
+            serializer = self.get_serializer(patched_user)
+        else:
+            serializer = self.get_serializer(user)
         return Response(serializer.data)
 
 
