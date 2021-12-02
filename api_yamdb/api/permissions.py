@@ -4,12 +4,12 @@ from reviews.enums import Roles
 
 
 class IsAdminUserOrReadOnly(BasePermission):
-
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS:
             return True
-
-        return request.user.role == Roles.USER and request.user.role == Roles.ADMIN
+        if request.user.is_authenticated:
+            return request.user.role == Roles.ADMIN
+        return False
 
 
 class AdminOnly(BasePermission):
