@@ -1,14 +1,14 @@
-import json
-
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import filters, mixins, viewsets, generics, status, permissions
 from rest_framework.viewsets import GenericViewSet
 
 from .filters import TitleFilter
-from .permissions import IsAdminUserOrReadOnly, AdminOrAuthOnly
+from .permissions import IsAdminUserOrReadOnly, AdminOnly
 from reviews.models import Category, Genre, Title, User
 from .serializers import (CategorySerializer,
                           GenreSerializer,
@@ -51,12 +51,22 @@ class RefreshTokenView(generics.GenericAPIView):
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    permission_classes = (AdminOrAuthOnly,)
+    permission_classes = (AdminOnly,)
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    lookup_field = 'username'
 
-    # def perform_create(self, serializer):
-    #     serializer.save(author=self.request.user)
+    @action(methods=['get', 'patch'], detail=False, permission_classes=[IsAuthenticated],
+            url_path='me', url_name='me')
+    def me(self, request, *args, **kwargs):
+        user = get_object_or_404(User, pk=request.user.id)
+        print(request.data)
+        # if self.request.method == 'PATCH':
+        #     self.update(request)
+            # User.objects.filter(pk=request.user.id).update(request.data)
+
+        serializer = self.get_serializer(user)
+        return Response(serializer.data)
 
 
 class TitleViewSet(viewsets.ModelViewSet):

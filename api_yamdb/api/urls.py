@@ -13,11 +13,12 @@ router_v1.register(
     r'titles/(?P<title_id>[^/.]+)/reviews', views.ReviewViewSet, basename='review'
 )
 router_v1.register(
-    r'titles/(?P<title_id>[^/.]+)/reviews/(?P<review_id>[^/.]+)/comments', views.CommentViewSet, basename='comments'
+    r'titles/(?P<title_id>[^/.]+)/reviews/(?P<review_id>[^/.]+)/comments',
+    views.CommentViewSet, basename='comments'
 )
 
 urlpatterns = [
     path('v1/', include(router_v1.urls)),
     path('v1/auth/signup/', SignupView.as_view(), name="signup"),
-    path('v1/auth/token/', RefreshTokenView.as_view(), name="token"),
+    path('v1/auth/token/', RefreshTokenView.as_view(), name="token")
 ]
