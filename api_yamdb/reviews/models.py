@@ -3,13 +3,8 @@ import uuid
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
-from django.db.models import constraints
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import AccessToken
-<<<<<<< HEAD
-=======
-from enum import Enum
->>>>>>> feature_3
 
 from .manager import UserManager
 from datetime import date
