@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.decorators import action
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import filters, mixins, viewsets, generics, status, permissions
@@ -12,7 +13,7 @@ from reviews.models import Category, Genre, Title, User
 from .serializers import (CategorySerializer,
                           GenreSerializer,
                           TitleReadSerializer, TitleWriteSerializer, SignupSerializer, ConfirmationSerializer,
-                          UserSerializer,
+                          UserSerializer, UserMeSerializer,
                           )
 from django.core.mail import send_mail
 
@@ -43,9 +44,10 @@ class RefreshTokenView(generics.GenericAPIView):
         serializer = self.serializer_class(data=user)
         serializer.is_valid(raise_exception=True)
         user_data = serializer.data
-        user = get_object_or_404(
-            User, username=user_data['username'], confirmation_code=user_data['confirmation_code']
-        )
+        user = get_object_or_404(User, username=user_data['username'])
+        if user.confirmation_code != user_data['confirmation_code']:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
         return Response({'token': str(user.token)}, status=status.HTTP_200_OK)
 
 
@@ -54,9 +56,44 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = 'username'
+    pagination_class = LimitOffsetPagination
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('username',)
 
-    @action(methods=['get', 'patch'], detail=False, permission_classes=[IsAuthenticated])
-    def me(self, request, *args, **kwargs):
+    # def retrieve(self, request, *args, **kwargs):
+    #     print(1111)
+    #     return 11
+
+    # def destroy(self, request, *args, **kwargs):
+    #     req_user = request.user
+    #     if user.is_superuser:
+    #         return Response('Permission denied', status=204)
+    #
+    #     user
+        # print(self.request.user)
+        # print(self.request.user.is_superuser)
+        # # return False
+        # if self.request.user.is_superuser:
+        #     return Response('Permission denied', status='HTTP_204_NO_CONTENT')
+        #
+        # self.perform_destroy(request)
+
+    # def destroy(self, request, *args, **kwargs):
+    #     print(34569874598675436897)
+    #     instance = self.get_object()
+    #     self.perform_destroy(instance)
+    #     return Response(status=status.HTTP_204_NO_CONTENT)
+
+    # @action(methods=['delete'], detail=False)
+    # def delete(self, request):
+    #     print(self.request.user)
+    #     if self.request.user.is_superuser:
+    #         return Response('Permission denied', status='HTTP_204_NO_CONTENT')
+    #
+    #     self.destroy(request)
+
+    @action(methods=['get', 'patch'], detail=False, permission_classes=[IsAuthenticated], serializer_class=UserMeSerializer)
+    def me(self, request):
         self.kwargs['username'] = request.user.username
         user = get_object_or_404(User, pk=request.user.id)
         if self.request.method == 'PATCH':

@@ -14,7 +14,8 @@ class IsAdminUserOrReadOnly(BasePermission):
 
 class AdminOnly(BasePermission):
     def has_permission(self, request, view):
-        return request.user.role == Roles.ADMIN
+        print(1)
+        return request.user.is_authenticated and request.user.role == Roles.ADMIN
 
     # def has_object_permission(self, request, view, obj):
     #     return obj == request.user
