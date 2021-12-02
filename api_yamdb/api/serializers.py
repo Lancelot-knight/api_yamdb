@@ -13,7 +13,9 @@ class SignupSerializer(serializers.ModelSerializer):
         username = attrs.get('username')
 
         if username == 'me':
-            raise serializers.ValidationError('Запрещенное имя для пользователя')
+            raise serializers.ValidationError(
+                'Запрещенное имя для пользователя'
+            )
         return attrs
 
     def create(self, validated_data):
@@ -32,7 +34,9 @@ class ConfirmationSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'bio', 'role')
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role'
+        )
 
 
 class UserMeSerializer(serializers.ModelSerializer):
@@ -40,7 +44,9 @@ class UserMeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'bio', 'role')
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role'
+        )
 
 
 class CategorySerializer(serializers.ModelSerializer):

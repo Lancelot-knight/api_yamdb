@@ -1,25 +1,26 @@
+from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, mixins, viewsets, generics, status, permissions
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import filters, mixins, viewsets, generics, status, permissions
 from rest_framework.viewsets import GenericViewSet
 
-from .filters import TitleFilter
-from .permissions import IsAdminUserOrReadOnly, AdminOnly
 from reviews.models import Category, Genre, Title, User
-from .serializers import (CategorySerializer,
-                          GenreSerializer,
-                          TitleReadSerializer, TitleWriteSerializer, SignupSerializer, ConfirmationSerializer,
-                          UserSerializer, UserMeSerializer,
-                          )
-from django.core.mail import send_mail
+from .filters import TitleFilter
+from .permissions import IsAdminUserOrReadOnly, AdminOrSuperUserOnly
+from .serializers import (
+    CategorySerializer,
+    GenreSerializer,
+    TitleReadSerializer, TitleWriteSerializer,
+    SignupSerializer, ConfirmationSerializer,
+    UserSerializer, UserMeSerializer,
+)
 
 
 class SignupView(generics.GenericAPIView):
-
     serializer_class = SignupSerializer
     permission_classes = (permissions.AllowAny,)
 
@@ -31,7 +32,9 @@ class SignupView(generics.GenericAPIView):
         user_data = serializer.data
         user = User.objects.get(email=user_data['email'])
         email_body = f'Confirmation code: {user.confirmation_code}!'
-        send_mail('Confirmation code', email_body, 'root@mail.ru', (user.email,))
+        send_mail(
+            'Confirmation code', email_body, 'root@mail.ru', (user.email,)
+        )
         return Response(user_data, status=status.HTTP_200_OK)
 
 
@@ -48,11 +51,13 @@ class RefreshTokenView(generics.GenericAPIView):
         if user.confirmation_code != user_data['confirmation_code']:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({'token': str(user.token)}, status=status.HTTP_200_OK)
+        return Response(
+            {'token': str(user.token)}, status=status.HTTP_200_OK
+        )
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    permission_classes = (AdminOnly,)
+    permission_classes = (AdminOrSuperUserOnly,)
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = 'username'
@@ -60,39 +65,12 @@ class UserViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
 
-    # def retrieve(self, request, *args, **kwargs):
-    #     print(1111)
-    #     return 11
-
-    # def destroy(self, request, *args, **kwargs):
-    #     req_user = request.user
-    #     if user.is_superuser:
-    #         return Response('Permission denied', status=204)
-    #
-    #     user
-        # print(self.request.user)
-        # print(self.request.user.is_superuser)
-        # # return False
-        # if self.request.user.is_superuser:
-        #     return Response('Permission denied', status='HTTP_204_NO_CONTENT')
-        #
-        # self.perform_destroy(request)
-
-    # def destroy(self, request, *args, **kwargs):
-    #     print(34569874598675436897)
-    #     instance = self.get_object()
-    #     self.perform_destroy(instance)
-    #     return Response(status=status.HTTP_204_NO_CONTENT)
-
-    # @action(methods=['delete'], detail=False)
-    # def delete(self, request):
-    #     print(self.request.user)
-    #     if self.request.user.is_superuser:
-    #         return Response('Permission denied', status='HTTP_204_NO_CONTENT')
-    #
-    #     self.destroy(request)
-
-    @action(methods=['get', 'patch'], detail=False, permission_classes=[IsAuthenticated], serializer_class=UserMeSerializer)
+    @action(
+        methods=['get', 'patch'],
+        detail=False,
+        permission_classes=[IsAuthenticated],
+        serializer_class=UserMeSerializer
+    )
     def me(self, request):
         self.kwargs['username'] = request.user.username
         user = get_object_or_404(User, pk=request.user.id)
