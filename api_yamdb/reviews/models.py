@@ -6,23 +6,24 @@ from django.db import models
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import AccessToken
 
+from .enums import Roles
 from .manager import UserManager
 from datetime import date
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    ROLE_CHOICES = (
-        (1, 'user'),
-        (2, 'moderator'),
-        (3, 'admin')
-    )
-
     username = models.CharField(max_length=30, unique=True)
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=30, blank=True)
     last_name = models.CharField(max_length=50, blank=True)
     bio = models.CharField(max_length=100, blank=True)
-    role = models.PositiveSmallIntegerField(choices=ROLE_CHOICES, blank=True, null=True, default=1)
+    role = models.CharField(
+        max_length=9,
+        choices=[(role.value, role.value) for role in Roles],
+        blank=True,
+        null=True,
+        default=Roles.USER
+    )
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     confirmation_code = models.CharField(max_length=256, default=uuid.uuid4)
