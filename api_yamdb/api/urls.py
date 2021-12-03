@@ -10,11 +10,14 @@ router_v1.register('categories', views.CategoryViewSet, basename='category')
 router_v1.register('genres', views.GenreViewSet, basename='genre')
 router_v1.register('users', views.UserViewSet, basename='users')
 router_v1.register(
-    r'titles/(?P<title_id>[^/.]+)/reviews', views.ReviewViewSet, basename='review'
+    r'titles/(?P<title_id>\d+)/reviews',
+    views.ReviewViewSet,
+    basename='reviews'
 )
 router_v1.register(
-    r'titles/(?P<title_id>[^/.]+)/reviews/(?P<review_id>[^/.]+)/comments',
-    views.CommentViewSet, basename='comments'
+    r'titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)/comments',
+    views.CommentViewSet,
+    basename='comments'
 )
 
 urlpatterns = [
