@@ -1,13 +1,13 @@
 import uuid
+from datetime import date
 
 from django.contrib.auth.models import AbstractUser
-from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import AccessToken
 
 from .enums import Roles, Score
-from datetime import date
 
 
 class User(AbstractUser):
