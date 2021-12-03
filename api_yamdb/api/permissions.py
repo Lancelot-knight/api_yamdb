@@ -13,5 +13,12 @@ class AdminOnly(BasePermission):
     def has_permission(self, request, view):
         return request.user.role == Roles.ADMIN
 
-    # def has_object_permission(self, request, view, obj):
-    #     return obj == request.user
+
+class StaffOrAuthorOrReadOnly(BasePermission):
+    
+    def has_object_permission(self, request, view, obj):
+        return (
+            request.method in SAFE_METHODS
+            or obj.author == request.user
+            or request.user.is_staff
+        )

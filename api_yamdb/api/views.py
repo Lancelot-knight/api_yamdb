@@ -8,10 +8,10 @@ from rest_framework import filters, mixins, viewsets, generics, status, permissi
 from rest_framework.viewsets import GenericViewSet
 
 from .filters import TitleFilter
-from .permissions import IsAdminUserOrReadOnly, AdminOnly
-from reviews.models import Category, Genre, Title, User
-from .serializers import (CategorySerializer,
-                          GenreSerializer,
+from .permissions import IsAdminUserOrReadOnly, AdminOnly, StaffOrAuthorOrReadOnly
+from reviews.models import Category, Genre, Title, User, Review, Comment
+from .serializers import (CategorySerializer, CommentSerializer,
+                          GenreSerializer, ReviewSerializer,
                           TitleReadSerializer, TitleWriteSerializer, SignupSerializer, ConfirmationSerializer,
                           UserSerializer,
                           )
@@ -110,8 +110,22 @@ class GenreViewSet(MixinSet):
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    pass
+    serializers_class = ReviewSerializer
+    permission_classes = (StaffOrAuthorOrReadOnly,)
+    
+    def get_queryset(self):
+        title_id = self.kwargs.get('title_id')
+        title = get_object_or_404(Title, id=title_id)
+        new_queryset = title.reviews.all()
+        return new_queryset
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    pass
+    serializers_class = CommentSerializer
+    permission_classes = (StaffOrAuthorOrReadOnly,)
+
+    def get_queryset(self):
+        review_id = self.kwargs.get('review_id')
+        review = get_object_or_404(Review, id=review_id)
+        new_queryset = review.comments.all()
+        return new_queryset

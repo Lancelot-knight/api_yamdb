@@ -6,7 +6,7 @@ from django.db import models
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import AccessToken
 
-from .enums import Roles , Score
+from .enums import Roles, Score
 from .manager import UserManager
 from datetime import date
 
@@ -97,26 +97,13 @@ class Title(models.Model):
         null=True,
         blank=True
     )
+    score = models.FloatField()
 
     def __str__(self):
         return self.name[0:10]
 
 
 class Review(models.Model):
-
-    SCORE_CHOICES = [
-        (1, 'Perfect'),
-        (9, 'Outstanding'),
-        (8, 'Excellent'),
-        (7, 'Very good'),
-        (6, 'Good'),
-        (5, 'Above average'),
-        (4, 'Average'),
-        (3, 'Below average'),
-        (2, 'Weak'),
-        (1, 'Very weak'),
-    ]
-
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
@@ -134,7 +121,10 @@ class Review(models.Model):
         related_name='reviews',
         verbose_name='автор'
     )
-    score = models.IntegerField(choices=SCORE_CHOICES, default=4)
+    score = models.IntegerField(
+        choices=[(score.value, score.value) for score in Score],
+        default=4
+    )
     pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
 
     class Meta:
