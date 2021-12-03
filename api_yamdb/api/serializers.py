@@ -85,8 +85,8 @@ class TitleWriteSerializer(TitleReadSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(read_only=True, slug_field='username')
     title = serializers.SlugRelatedField(
-        queryset=Title.objects.all(),
         slug_field='name',
+        read_only=True
     )
 
     class Meta:

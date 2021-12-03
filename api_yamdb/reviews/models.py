@@ -2,6 +2,7 @@ import uuid
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import AccessToken
 
@@ -106,7 +107,6 @@ class Review(models.Model):
     text = models.TextField(
         'Содержание отзыва',
         blank=False, 
-        max_length=300
     )
     author = models.ForeignKey(
         User,
@@ -115,7 +115,7 @@ class Review(models.Model):
         verbose_name='автор'
     )
     score = models.IntegerField(
-        choices=[(score.value, score.value) for score in Score],
+        validators=(MinValueValidator(1), MaxValueValidator(10)),
         default=4
     )
     pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)

@@ -124,7 +124,7 @@ class GenreViewSet(MixinSet):
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    serializers_class = ReviewSerializer
+    serializer_class = ReviewSerializer
     permission_classes = (StaffOrAuthorOrReadOnly,)
     
     def get_queryset(self):
@@ -132,10 +132,16 @@ class ReviewViewSet(viewsets.ModelViewSet):
         title = get_object_or_404(Title, id=title_id)
         new_queryset = title.reviews.all()
         return new_queryset
+    
+    def perform_create(self, serializer):
+        serializer.save(
+            author=self.request.user,
+            title = self.kwargs.get('title_id')
+        )
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    serializers_class = CommentSerializer
+    serializer_class = CommentSerializer
     permission_classes = (StaffOrAuthorOrReadOnly,)
 
     def get_queryset(self):
