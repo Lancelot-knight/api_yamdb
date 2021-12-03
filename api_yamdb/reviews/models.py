@@ -7,7 +7,7 @@ from django.db import models
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import AccessToken
 
-from .enums import Roles, Score
+from .enums import Roles
 
 
 class User(AbstractUser):
@@ -106,7 +106,7 @@ class Review(models.Model):
     )
     text = models.TextField(
         'Содержание отзыва',
-        blank=False, 
+        blank=False,
     )
     author = models.ForeignKey(
         User,

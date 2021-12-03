@@ -14,13 +14,9 @@ class IsAdminUserOrReadOnly(BasePermission):
 
 class AdminOrSuperUserOnly(BasePermission):
     def has_permission(self, request, view):
-        return (
-                request.user.is_authenticated and
-                (
-                        request.user.role == Roles.ADMIN or
-                        request.user.is_superuser
+        return (request.user.is_authenticated and (
+                request.user.role == Roles.ADMIN or request.user.is_superuser)
                 )
-        )
 
 
 class StaffOrAuthorOrReadOnly(BasePermission):
