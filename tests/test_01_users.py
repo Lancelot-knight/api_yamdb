@@ -257,6 +257,7 @@ class Test01UserAPI:
             'email': 'testuser3@yamdb.fake'
         }
         response = user_superuser_client.post('/api/v1/users/', data=valid_data)
+        print(' - - - - ', response)
         assert response.status_code == 201, (
             'Проверьте, что при POST запросе `/api/v1/users/` от суперпользователя, '
             'с правильными данными, возвращаете статус 201.'

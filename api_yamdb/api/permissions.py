@@ -6,13 +6,22 @@ from reviews.enums import Roles
 class IsAdminUserOrReadOnly(BasePermission):
 
     def has_permission(self, request, view):
-        return request.method in SAFE_METHODS or request.user.is_superuser
+        if request.method in SAFE_METHODS:
+            return True
+        if request.user.is_authenticated:
+            return request.user.role == Roles.ADMIN
+        return False
 
 
-class AdminOnly(BasePermission):
+class AdminOrSuperUserOnly(BasePermission):
     def has_permission(self, request, view):
-        return request.user.role == Roles.ADMIN
-
+        return (
+                request.user.is_authenticated and
+                (
+                        request.user.role == Roles.ADMIN or
+                        request.user.is_superuser
+                )
+        )
 
 class StaffOrAuthorOrReadOnly(BasePermission):
     

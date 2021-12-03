@@ -1,21 +1,17 @@
 import uuid
 
-from django.contrib.auth.base_user import AbstractBaseUser
-from django.contrib.auth.models import PermissionsMixin
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import AccessToken
 
 from .enums import Roles, Score
-from .manager import UserManager
 from datetime import date
 
 
-class User(AbstractBaseUser, PermissionsMixin):
+class User(AbstractUser):
     username = models.CharField(max_length=30, unique=True)
     email = models.EmailField(unique=True)
-    first_name = models.CharField(max_length=30, blank=True)
-    last_name = models.CharField(max_length=50, blank=True)
     bio = models.CharField(max_length=100, blank=True)
     role = models.CharField(
         max_length=9,
@@ -24,15 +20,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         null=True,
         default=Roles.USER
     )
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
     confirmation_code = models.CharField(max_length=256, default=uuid.uuid4)
 
     USERNAME_FIELD = 'email'
 
     REQUIRED_FIELDS = ('username',)
-
-    objects = UserManager()
 
     def __str__(self):
         return self.email
@@ -53,7 +45,9 @@ def validate_date(value):
 
 
 class Category(models.Model):
-    name = models.TextField('Название категории', blank=False, max_length=150)
+    name = models.TextField(
+        'Название категории', blank=False, max_length=150
+    )
     slug = models.SlugField('slug', blank=False, unique=True, db_index=True)
 
     def __str__(self):

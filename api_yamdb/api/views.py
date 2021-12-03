@@ -1,25 +1,27 @@
-from django.db.models import Avg
+from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, mixins, viewsets, generics, status, permissions
 from rest_framework.decorators import action
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import filters, mixins, viewsets, generics, status, permissions
 from rest_framework.viewsets import GenericViewSet
 
+from reviews.models import Category, Genre, Title, User, Review
 from .filters import TitleFilter
-from .permissions import IsAdminUserOrReadOnly, AdminOnly, StaffOrAuthorOrReadOnly
-from reviews.models import Category, Genre, Title, User, Review, Comment
-from .serializers import (CategorySerializer, CommentSerializer,
-                          GenreSerializer, ReviewSerializer,
-                          TitleReadSerializer, TitleWriteSerializer, SignupSerializer, ConfirmationSerializer,
-                          UserSerializer,
-                          )
-from django.core.mail import send_mail
+from .permissions import IsAdminUserOrReadOnly, AdminOrSuperUserOnly, StaffOrAuthorOrReadOnly
+from .serializers import (
+    CategorySerializer,
+    GenreSerializer,
+    TitleReadSerializer, TitleWriteSerializer,
+    SignupSerializer, ConfirmationSerializer,
+    UserSerializer, UserMeSerializer,
+    CommentSerializer, ReviewSerializer
+)
 
 
 class SignupView(generics.GenericAPIView):
-
     serializer_class = SignupSerializer
     permission_classes = (permissions.AllowAny,)
 
@@ -31,7 +33,9 @@ class SignupView(generics.GenericAPIView):
         user_data = serializer.data
         user = User.objects.get(email=user_data['email'])
         email_body = f'Confirmation code: {user.confirmation_code}!'
-        send_mail('Confirmation code', email_body, 'root@mail.ru', (user.email,))
+        send_mail(
+            'Confirmation code', email_body, 'root@mail.ru', (user.email,)
+        )
         return Response(user_data, status=status.HTTP_200_OK)
 
 
@@ -44,33 +48,43 @@ class RefreshTokenView(generics.GenericAPIView):
         serializer = self.serializer_class(data=user)
         serializer.is_valid(raise_exception=True)
         user_data = serializer.data
-        user = get_object_or_404(
-            User, username=user_data['username'], confirmation_code=user_data['confirmation_code']
+        user = get_object_or_404(User, username=user_data['username'])
+        if user.confirmation_code != user_data['confirmation_code']:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {'token': str(user.token)}, status=status.HTTP_200_OK
         )
-        return Response({'token': str(user.token)}, status=status.HTTP_200_OK)
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    permission_classes = (AdminOnly,)
+    permission_classes = (AdminOrSuperUserOnly,)
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = 'username'
+    pagination_class = LimitOffsetPagination
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('username',)
 
-    @action(methods=['get', 'patch'], detail=False, permission_classes=[IsAuthenticated],
-            url_path='me', url_name='me')
-    def me(self, request, *args, **kwargs):
+    @action(
+        methods=['get', 'patch'],
+        detail=False,
+        permission_classes=[IsAuthenticated],
+        serializer_class=UserMeSerializer
+    )
+    def me(self, request):
+        self.kwargs['username'] = request.user.username
         user = get_object_or_404(User, pk=request.user.id)
-        print(request.data)
-        # if self.request.method == 'PATCH':
-        #     self.update(request)
-            # User.objects.filter(pk=request.user.id).update(request.data)
-
-        serializer = self.get_serializer(user)
+        if self.request.method == 'PATCH':
+            self.partial_update(request)
+            patched_user = User.objects.get(pk=request.user.id)
+            serializer = self.get_serializer(patched_user)
+        else:
+            serializer = self.get_serializer(user)
         return Response(serializer.data)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    # queryset = Title.objects.annotate(rating=Avg('reviews__score'))
     queryset = Title.objects.all()
     permission_classes = (IsAdminUserOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
