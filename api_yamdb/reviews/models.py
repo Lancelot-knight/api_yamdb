@@ -97,7 +97,6 @@ class Title(models.Model):
         null=True,
         blank=True
     )
-    score = models.FloatField()
 
     def __str__(self):
         return self.name[0:10]
