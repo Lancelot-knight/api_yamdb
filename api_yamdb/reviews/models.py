@@ -1,13 +1,12 @@
 import uuid
-from datetime import date
 
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import AccessToken
 
 from .enums import Role
+from .validators import validate_year
 
 
 class User(AbstractUser):
@@ -51,25 +50,25 @@ class User(AbstractUser):
         return self.role == Role.USER
 
 
-def validate_date(value):
-    current_year = int(date.today().year)
-    if value > current_year or value <= 0:
-        raise ValidationError('Wrong date!')
-
-
 class Category(models.Model):
-    name = models.TextField(
-        'Название категории', blank=False, max_length=150
-    )
-    slug = models.SlugField('slug', blank=False, unique=True, db_index=True)
+    name = models.TextField('Название категории', max_length=150)
+    slug = models.SlugField('slug', unique=True, db_index=True)
+
+    class Meta:
+        verbose_name = 'category'
+        verbose_name_plural = 'category'
 
     def __str__(self):
         return self.name[0:10]
 
 
 class Genre(models.Model):
-    name = models.TextField('Название жанра', blank=False, max_length=150)
-    slug = models.SlugField('slug', blank=False, unique=True, db_index=True)
+    name = models.TextField('Название жанра', max_length=150)
+    slug = models.SlugField('slug', unique=True, db_index=True)
+
+    class Meta:
+        verbose_name = 'genre'
+        verbose_name_plural = 'genre'
 
     def __str__(self):
         return self.name[0:10]
@@ -82,7 +81,7 @@ class Title(models.Model):
         max_length=200,
         db_index=True
     )
-    year = models.IntegerField('Год', blank=True, validators=[validate_date])
+    year = models.IntegerField('Год', blank=True, validators=[validate_year])
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
@@ -105,6 +104,10 @@ class Title(models.Model):
         blank=True
     )
 
+    class Meta:
+        verbose_name = 'title'
+        verbose_name_plural = 'title'
+
     def __str__(self):
         return self.name[0:10]
 
@@ -118,7 +121,6 @@ class Review(models.Model):
     )
     text = models.TextField(
         'Содержание отзыва',
-        blank=False,
     )
     author = models.ForeignKey(
         User,
@@ -128,9 +130,13 @@ class Review(models.Model):
     )
     score = models.IntegerField(
         validators=(MinValueValidator(1), MaxValueValidator(10)),
-        default=4
+        error_messages={'validators': 'Оценочка от 1 до 10'}
     )
-    pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
+    pub_date = models.DateTimeField(
+        'Дата публикации',
+        auto_now_add=True,
+        db_index=True
+    )
 
     class Meta:
         constraints = [
@@ -139,6 +145,8 @@ class Review(models.Model):
                 name='unique_author_review'
             )
         ]
+        verbose_name = 'review'
+        verbose_name_plural = 'review'
 
 
 class Comment(models.Model):
@@ -150,7 +158,6 @@ class Comment(models.Model):
     )
     text = models.TextField(
         'Комментарий',
-        blank=False,
         max_length=300
     )
     author = models.ForeignKey(
@@ -160,3 +167,7 @@ class Comment(models.Model):
         verbose_name='автор'
     )
     pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'comment'
+        verbose_name_plural = 'comment'

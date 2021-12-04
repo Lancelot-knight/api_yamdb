@@ -1,18 +1,18 @@
 from django.core.mail import send_mail
-from django.shortcuts import get_object_or_404
 from django.db.models import Avg
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import (filters, generics, mixins, permissions, status,
+from rest_framework import (filters, generics, permissions, status,
                             viewsets)
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet
 
 from api_yamdb.settings import ADMIN_EMAIL
-from reviews.models import Category, Genre, Review, Title, User
 
+from reviews.models import Category, Genre, Review, Title, User
+from .mixins import MixinSet
 from .filters import TitleFilter
 from .permissions import (AdminOrSuperUserOnly, IsAdminUserOrReadOnly,
                           StaffOrAuthorOrReadOnly)
@@ -95,15 +95,6 @@ class TitleViewSet(viewsets.ModelViewSet):
         if self.request.method in ['POST', 'PATCH']:
             return TitleWriteSerializer
         return TitleReadSerializer
-
-
-class MixinSet(
-    mixins.CreateModelMixin,
-    mixins.ListModelMixin,
-    mixins.DestroyModelMixin,
-    GenericViewSet,
-):
-    pass
 
 
 class CategoryViewSet(MixinSet):
