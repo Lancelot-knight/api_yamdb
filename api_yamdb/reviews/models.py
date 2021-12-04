@@ -7,7 +7,7 @@ from django.db import models
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import AccessToken
 
-from .enums import Roles
+from .enums import Role
 
 
 class User(AbstractUser):
@@ -16,16 +16,20 @@ class User(AbstractUser):
     bio = models.CharField(max_length=100, blank=True)
     role = models.CharField(
         max_length=9,
-        choices=[(role.value, role.value) for role in Roles],
+        choices=[(role.value, role.value) for role in Role],
         blank=True,
         null=True,
-        default=Roles.USER
+        default=Role.USER
     )
     confirmation_code = models.CharField(max_length=256, default=uuid.uuid4)
 
     USERNAME_FIELD = 'email'
 
     REQUIRED_FIELDS = ('username',)
+
+    class Meta:
+        verbose_name = 'user'
+        verbose_name_plural = 'users'
 
     def __str__(self):
         return self.email
@@ -34,9 +38,17 @@ class User(AbstractUser):
     def token(self):
         return AccessToken.for_user(self)
 
-    class Meta:
-        verbose_name = 'user'
-        verbose_name_plural = 'users'
+    @property
+    def is_admin(self):
+        return self.role == Role.ADMIN
+
+    @property
+    def is_moderator(self):
+        return self.role == Role.MODERATOR
+
+    @property
+    def is_user(self):
+        return self.role == Role.USER
 
 
 def validate_date(value):

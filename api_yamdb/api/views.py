@@ -9,6 +9,8 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
+
+from api_yamdb.settings import ADMIN_EMAIL
 from reviews.models import Category, Genre, Review, Title, User
 
 from .filters import TitleFilter
@@ -30,11 +32,11 @@ class SignupView(generics.GenericAPIView):
         serializer = self.serializer_class(data=user)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        user_data = serializer.data
+        user_data = serializer.validated_data
         user = User.objects.get(email=user_data['email'])
         email_body = f'Confirmation code: {user.confirmation_code}!'
         send_mail(
-            'Confirmation code', email_body, 'root@mail.ru', (user.email,)
+            'Confirmation code', email_body, ADMIN_EMAIL, (user.email,)
         )
         return Response(user_data, status=status.HTTP_200_OK)
 
@@ -47,7 +49,7 @@ class RefreshTokenView(generics.GenericAPIView):
         user = request.data
         serializer = self.serializer_class(data=user)
         serializer.is_valid(raise_exception=True)
-        user_data = serializer.data
+        user_data = serializer.validated_data
         user = get_object_or_404(User, username=user_data['username'])
         if user.confirmation_code != user_data['confirmation_code']:
             return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -74,13 +76,10 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def me(self, request):
         self.kwargs['username'] = request.user.username
-        user = get_object_or_404(User, pk=request.user.id)
         if self.request.method == 'PATCH':
             self.partial_update(request)
-            patched_user = User.objects.get(pk=request.user.id)
-            serializer = self.get_serializer(patched_user)
-        else:
-            serializer = self.get_serializer(user)
+            request.user.refresh_from_db()
+        serializer = self.get_serializer(request.user)
         return Response(serializer.data)
 
 
